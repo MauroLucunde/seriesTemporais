@@ -6,7 +6,6 @@ AVISO: dados e rótulos artificiais. Este projecto não é um dispositivo médic
 e não deve ser utilizado para diagnóstico ou decisões clínicas.
 """
 
-from pathlib import Path
 import json
 
 import numpy as np
@@ -35,8 +34,10 @@ st.set_page_config(
 FS = 250
 DURACAO = 8
 NOMES_CLASSES = ["Padrão A", "Padrão B"]
-PASTA_SAIDA = Path("resultados")
-PASTA_SAIDA.mkdir(exist_ok=True)
+COLUNAS_CARACTERISTICAS = [
+    "Média", "Desvio padrão", "Amplitude pico a pico",
+    "RMS", "Energia média"
+]
 
 
 # ---------------------------------------------------------------------
@@ -127,11 +128,7 @@ def criar_dataset(n_pessoas: int, janelas_por_pessoa: int, semente: int):
 def treinar_avaliar(df: pd.DataFrame, n_estimators: int,
                     test_size: float, semente: int):
     """Divide por pessoa, treina o modelo e calcula as métricas."""
-    colunas = [
-        "Média", "Desvio padrão", "Amplitude pico a pico",
-        "RMS", "Energia média"
-    ]
-    X = df[colunas]
+    X = df[COLUNAS_CARACTERISTICAS]
     y = df["classe"].to_numpy()
     grupos = df["pessoa"].to_numpy()
 
@@ -158,7 +155,10 @@ def treinar_avaliar(df: pd.DataFrame, n_estimators: int,
         "Precisão (Padrão B)": precision_score(reais, previsoes, zero_division=0),
         "Sensibilidade (Padrão B)": recall_score(reais, previsoes, zero_division=0),
         "F1-score (Padrão B)": f1_score(reais, previsoes, zero_division=0),
-        "AUC-ROC": roc_auc_score(reais, probabilidades) if len(np.unique(reais)) == 2 else float("nan"),
+        "AUC-ROC": (
+            roc_auc_score(reais, probabilidades)
+            if len(np.unique(reais)) == 2 else float("nan")
+        ),
     }
 
     previsoes_df = pd.DataFrame({
@@ -195,15 +195,19 @@ with st.sidebar:
     janelas = st.slider("Janelas por pessoa", 2, 10, 4)
     n_estimators = st.slider("Árvores do Random Forest", 50, 500, 150, step=50)
     test_size = st.slider("Proporção para teste", 0.15, 0.40, 0.25, step=0.05)
-   semente = st.number_input(
-    "Semente aleatória", 
-    min_value=1, 
-    max_value=50000000,  # Aumentou o limite máximo aqui
-    value=20261026, 
-    step=1
-)
+    semente = st.number_input(
+        "Semente aleatória",
+        min_value=1,
+        max_value=50_000_000,
+        value=20261026,
+        step=1,
+    )
 
-    executar = st.button("🚀 Gerar dados e treinar modelo", type="primary", use_container_width=True)
+    executar = st.button(
+        "🚀 Gerar dados e treinar modelo",
+        type="primary",
+        use_container_width=True,
+    )
 
 if "executado" not in st.session_state:
     st.session_state.executado = False
@@ -246,7 +250,12 @@ with tab1:
     m4.metric("Janelas de teste", f"{len(idx_teste)}")
 
     st.markdown("#### Distribuição das classes")
-    distribuicao = df["classe"].map({0: "Padrão A", 1: "Padrão B"}).value_counts()
+    distribuicao = (
+        df["classe"]
+        .map({0: "Padrão A", 1: "Padrão B"})
+        .value_counts()
+        .reindex(NOMES_CLASSES, fill_value=0)
+    )
     st.bar_chart(distribuicao)
 
     st.markdown("#### Métricas do modelo")
@@ -291,7 +300,7 @@ with tab3:
     with direita:
         importancia = pd.Series(
             modelo.feature_importances_,
-            index=["Média", "Desvio padrão", "Amplitude pico a pico", "RMS", "Energia média"]
+            index=COLUNAS_CARACTERISTICAS
         ).sort_values()
         st.markdown("**Importância das características**")
         st.bar_chart(importancia)
