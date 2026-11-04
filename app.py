@@ -195,8 +195,13 @@ with st.sidebar:
     janelas = st.slider("Janelas por pessoa", 2, 10, 4)
     n_estimators = st.slider("Árvores do Random Forest", 50, 500, 150, step=50)
     test_size = st.slider("Proporção para teste", 0.15, 0.40, 0.25, step=0.05)
-    semente = st.number_input("Semente aleatória", min_value=1, max_value=9999999,
-                              value=20261026, step=1)
+   semente = st.number_input(
+    "Semente aleatória", 
+    min_value=1, 
+    max_value=50000000,  # Aumentou o limite máximo aqui
+    value=20261026, 
+    step=1
+)
 
     executar = st.button("🚀 Gerar dados e treinar modelo", type="primary", use_container_width=True)
 
