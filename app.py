@@ -353,7 +353,7 @@ def ic_bootstrap(y, p, pessoas, limiar, n_boot, semente):
 # CABEÇALHO
 # ---------------------------------------------------------------------
 c_tit, c_btn = st.columns([5, 1])
-c_tit.title("❤️ T11 — Análise de séries temporais biomédicas")
+c_tit.title(" Análise de séries temporais biomédicas")
 c_tit.caption("Unidade IV · Algoritmos de Diagnóstico e Apoio à Decisão · "
               "ECG sintético com pré-processamento e aprendizagem automática")
 c_btn.write("")
